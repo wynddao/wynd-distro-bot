@@ -1,0 +1,23 @@
+{
+  "name": "wynd-distro-bot",
+  "version": "1.0.0",
+  "description": "A simple bot to trigger wynd distribution",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ping": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cosmorama/wynd-distro-bot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cosmorama/wynd-distro-bot/issues"
+  },
+  "homepage": "https://github.com/cosmorama/wynd-distro-bot#readme",
+  "dependencies": {
+    "cosmwasm": "^1.1.1"
+  }
+}
