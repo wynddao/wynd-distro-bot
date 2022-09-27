@@ -1,6 +1,10 @@
 const { GasPrice, DirectSecp256k1HdWallet, SigningCosmWasmClient, makeCosmoshubPath } = require("cosmwasm");
 const { env } = require("process");
 
+const distroAddr = "juno1yu7s35r3e43j635c7wxfev9876tvfpjf6n5803dwu6e3z8qrmvzshwk075";
+
+const pprint = x => console.log(JSON.stringify(x, undefined, 2));
+
 // Check "MNEMONIC" env variable and ensure it is set to a reasonable value
 function getMnemonic() {
     const mnemonic = env["MNEMONIC"];
@@ -29,8 +33,8 @@ async function connect(mnemonic) {
     
     // Init SigningCosmWasmClient client
     const client = await SigningCosmWasmClient.connectWithSigner(rpcEndpoint, offlineSigner, {
-      prefix,
-      gasPrice,
+        prefix,
+        gasPrice,
     });
     const balance = await client.getBalance(address, feeToken);
     console.log(`Balance: ${balance.amount} ${balance.denom}`);
@@ -38,24 +42,44 @@ async function connect(mnemonic) {
     const chainId = await client.getChainId();
   
     if (chainId !== junoConfig.chainId) {
-      throw Error("Given ChainId doesn't match the clients ChainID!");
+        throw Error("Given ChainId doesn't match the clients ChainID!");
     }
   
     return { client, address };
-  }
-  
-  async function main() {
+}
+
+// sees if it is time to call
+async function checkTrigger(client) {
+    const { config } = await client.queryContractSmart(distroAddr, {config:{}});
+    pprint(config);
+    const elapsed = Date.now() / 1000 - config.last_payment;
+    if (elapsed < config.epoch) {
+        console.log(`Next epoch comes in ${config.epoch - elapsed} seconds`);
+        return false;
+    } else {
+        return true;
+    }
+}
+
+async function pingTrigger(client, address) {
+    console.log(`Triggering payout`);
+    await client.execute(address, distroAddr, {payout: {}}, "auto");
+}
+
+async function main() {
     const mnemonic = getMnemonic();
     const { client, address} = await connect(mnemonic);
-    // TODO: call the contract
-  }
+    if (await checkTrigger(client)) {
+        await pingTrigger(client, address);
+    }
+}
 
-  main().then(
+main().then(
     () => {
-      process.exit(0);
+        process.exit(0);
     },
     (error) => {
-      console.error(error);
-      process.exit(1);
+        console.error(error);
+        process.exit(1);
     },
-  );
+);
